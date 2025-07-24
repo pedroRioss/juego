@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🧠 concéntrese en equipos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, rgba(15,32,39,0.85), rgba(32,58,67,0.85), rgba(44,83,100,0.85)),
+                  url('imagenes/fondo.png');
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+      height: 100vh;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #00eaff;
+      text-shadow: 0 0 10px #00eaff;
+      margin-bottom: 6px;
+    }
+
+    .info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 1.2rem;
+      gap: 6px;
+    }
+
+    .puntajes {
+      display: flex;
+      gap: 25px;
+    }
+
+    .puntaje span {
+      font-weight: bold;
+      color: #00eaff;
+    }
+
+    .turno {
+      background: #00eaff;
+      color: #000;
+      padding: 4px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+    }
+
+    .tablero {
+      display: grid;
+      gap: 12px;
+      margin: 10px 0;
+      max-height: 100%;
+      flex-grow: 1;
+      transition: all 0.4s ease;
+    }
+
+    .carta {
+      aspect-ratio: 1 / 1;
+      perspective: 800px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .contenido {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s;
+    }
+
+    .carta.volteada .contenido {
+      transform: rotateY(180deg);
+    }
+
+    .cara {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 10px;
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #00eaff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 1px 1px 3px black;
+    }
+
+    .frontal {
+      background-image: url('imagenes-memorama/tapa.png');
+    }
+
+    .trasera {
+      transform: rotateY(180deg);
+      flex-direction: column;
+    }
+
+    .botones {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    button {
+      background: #00eaff;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: 0 0 10px #00eaff;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #00c0dd;
+    }
+
+    .modal, .ganador {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      text-align: center;
+    }
+
+    .modal input {
+      padding: 10px;
+      margin: 10px;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: none;
+    }
+
+    .ganador {
+      background: rgba(0,0,0,0.95);
+      color: #00eaff;
+      font-size: 3.2rem;
+      font-weight: bold;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 concéntrese</h1>
+
+  <div class="info">
+    <div class="puntajes">
+      <div class="puntaje"><span id="nombre1">Equipo 1</span>: <span id="p1">0</span></div>
+      <div class="puntaje"><span id="nombre2">Equipo 2</span>: <span id="p2">0</span></div>
+    </div>
+    <div class="turno" id="turnoEquipo">Turno: Equipo 1</div>
+  </div>
+
+  <div class="tablero" id="tablero"></div>
+
+  <div class="botones">
+    <button onclick="seleccionarNivel(1)">Fácil</button>
+    <button onclick="seleccionarNivel(2)">Medio</button>
+    <button onclick="seleccionarNivel(3)">Difícil</button>
+    <button onclick="reiniciarJuego()">🔄 Reiniciar</button>
+    <button onclick="location.href='index.html'">Inicio</button>
+  </div>
+
+  <div class="modal" id="modal">
+    <h2>Ingresa los nombres de los equipos</h2>
+    <input type="text" id="input1" placeholder="Equipo 1" />
+    <input type="text" id="input2" placeholder="Equipo 2" />
+    <button onclick="iniciarJuego()">Comenzar Juego</button>
+  </div>
+
+  <div class="ganador" id="ganador"></div>
+
+  <script>
+    const todasLasImagenes = [
+      "imagenes-memorama/memorama/img1.jpeg",
+      "imagenes-memorama/memorama/img2.jfif",
+      "imagenes-memorama/memorama/img3.webp",
+      "imagenes-memorama/memorama/img4.webp",
+      "imagenes-memorama/memorama/img5.jpg",
+      "imagenes-memorama/memorama/img6.jfif",
+      "imagenes-memorama/memorama/img7.jpg",
+      "imagenes-memorama/memorama/img8.avif",
+      "imagenes-memorama/memorama/img9.avif",
+      "imagenes-memorama/memorama/img10.jfif",
+      "imagenes-memorama/memorama/img11.jfif",
+      "imagenes-memorama/memorama/img12.jpg",
+      "imagenes-memorama/memorama/img13.jfif",
+      "imagenes-memorama/memorama/img14.jpg",
+      "imagenes-memorama/memorama/img15.avif",
+      "imagenes-memorama/memorama/img16.jpg",
+      "imagenes-memorama/memorama/img17.jpg",
+      "imagenes-memorama/memorama/img18.jpg"
+    ];
+
+    let nivel = 1;
+    let tablero = document.getElementById("tablero");
+    let p1 = document.getElementById("p1");
+    let p2 = document.getElementById("p2");
+    let turnoEquipo = document.getElementById("turnoEquipo");
+    let ganadorDiv = document.getElementById("ganador");
+    let modal = document.getElementById("modal");
+    let nombre1 = document.getElementById("nombre1");
+    let nombre2 = document.getElementById("nombre2");
+
+    let primera = null;
+    let bloqueado = false;
+    let puntaje1 = 0, puntaje2 = 0, turno = 1;
+    let equipo1 = "Equipo 1", equipo2 = "Equipo 2";
+    let parejasEncontradas = 0;
+
+    function seleccionarNivel(n) {
+      nivel = n;
+      reiniciarJuego();
+    }
+
+    function iniciarJuego() {
+      const val1 = document.getElementById("input1").value.trim();
+      const val2 = document.getElementById("input2").value.trim();
+      if (val1) equipo1 = val1;
+      if (val2) equipo2 = val2;
+      nombre1.textContent = equipo1;
+      nombre2.textContent = equipo2;
+      modal.style.display = "none";
+      reiniciarJuego();
+    }
+
+    function actualizarTurno() {
+      turnoEquipo.textContent = `Turno: ${turno === 1 ? equipo1 : equipo2}`;
+    }
+
+    function cambiarTurno() {
+      turno = turno === 1 ? 2 : 1;
+      actualizarTurno();
+    }
+
+    function crearCartas() {
+  tablero.innerHTML = "";
+  let cantidad = nivel === 1 ? 8 : nivel === 2 ? 12 : 18;
+  let usadas = todasLasImagenes.slice(0, cantidad);
+  let pares = [...usadas, ...usadas].map((img, i) => ({ img, id: i })).sort(() => Math.random() - 0.5);
+
+  let columnas = nivel === 1 ? 4 : nivel === 2 ? 6 : 6;
+  tablero.style.gridTemplateColumns = `repeat(${columnas}, 1fr)`;
+
+  parejasEncontradas = 0;
+
+  pares.forEach((item, index) => {
+    const carta = document.createElement("div");
+    carta.classList.add("carta");
+
+    const contenido = document.createElement("div");
+    contenido.classList.add("contenido");
+
+    const frontal = document.createElement("div");
+frontal.classList.add("cara", "frontal");
+
+
+    // Agrega número al frente
+    // Agrega número al frente
+const numero = document.createElement("span");
+numero.textContent = index + 1;
+numero.style.position = "absolute";
+numero.style.top = "50%";
+numero.style.left = "50%";
+numero.style.transform = "translate(-50%, -50%)";
+numero.style.fontSize = "2.5rem";
+numero.style.fontWeight = "bold";
+numero.style.color = "#ffffff";
+numero.style.textShadow = "2px 2px 5px rgba(0,0,0,0.9)";
+frontal.appendChild(numero);
+
+
+    const trasera = document.createElement("div");
+    trasera.classList.add("cara", "trasera");
+    trasera.style.backgroundImage = `url('${item.img}')`;
+
+    contenido.appendChild(frontal);
+    contenido.appendChild(trasera);
+    carta.appendChild(contenido);
+    tablero.appendChild(carta);
+
+    carta.addEventListener("click", () => {
+      if (bloqueado || carta.classList.contains("volteada")) return;
+
+      carta.classList.add("volteada");
+
+      if (!primera) {
+        primera = carta;
+      } else {
+        const segunda = carta;
+        const img1 = primera.querySelector(".trasera").style.backgroundImage;
+        const img2 = segunda.querySelector(".trasera").style.backgroundImage;
+
+        if (img1 === img2) {
+          turno === 1 ? p1.textContent = ++puntaje1 : p2.textContent = ++puntaje2;
+          parejasEncontradas++;
+          primera = null;
+
+          if (parejasEncontradas === usadas.length) {
+            setTimeout(() => mostrarGanador(), 500);
+          }
+        } else {
+          bloqueado = true;
+          setTimeout(() => {
+            primera.classList.remove("volteada");
+            segunda.classList.remove("volteada");
+            primera = null;
+            bloqueado = false;
+            cambiarTurno();
+          }, 1000);
+        }
+      }
+    });
+  });
+}
+
+
+    function mostrarGanador() {
+      let mensaje = puntaje1 > puntaje2
+        ? `🏆 ¡${equipo1} gana con ${puntaje1} puntos!`
+        : puntaje2 > puntaje1
+        ? `🏆 ¡${equipo2} gana con ${puntaje2} puntos!`
+        : "🤝 ¡Empate!";
+      ganadorDiv.textContent = mensaje;
+      ganadorDiv.style.display = "flex";
+      setTimeout(() => ganadorDiv.style.display = "none", 5000);
+    }
+
+    function reiniciarJuego() {
+      primera = null;
+      bloqueado = false;
+      puntaje1 = 0;
+      puntaje2 = 0;
+      turno = 1;
+      p1.textContent = "0";
+      p2.textContent = "0";
+      actualizarTurno();
+      crearCartas();
+    }
+
+    window.onload = () => modal.style.display = "flex";
+  </script>
+</body>
+</html>

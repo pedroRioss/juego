@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Encuentra la Piedra</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: url('imagenes/fondo.png') no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 40px;
+      backdrop-filter: brightness(0.85);
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 3rem;
+      color: #00eaff;
+      text-shadow: 0 0 20px #00eaff;
+      margin-bottom: 20px;
+      animation: glow 2s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 10px #00eaff; }
+      to { text-shadow: 0 0 25px #00ffff; }
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .difficulty-buttons {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .difficulty-btn {
+      padding: 12px 20px;
+      font-size: 1rem;
+      background: rgba(0, 0, 0, 0.4);
+      border: 2px solid #00eaff77;
+      border-radius: 12px;
+      color: #00eaff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 8px #00eaff44;
+      position: relative;
+    }
+
+    .difficulty-btn:hover {
+      background: rgba(0, 238, 255, 0.1);
+      transform: scale(1.06);
+    }
+
+    .difficulty-btn::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .difficulty-btn:hover::after {
+      opacity: 1;
+    }
+
+    .difficulty-btn.selected {
+      background: #00eaff;
+      color: #000;
+      font-weight: bold;
+      box-shadow: 0 0 15px #00eaffcc;
+      border-color: #00eaff;
+    }
+
+    button {
+      padding: 12px 28px;
+      font-size: 1rem;
+      background: linear-gradient(to right, #00eaff, #00c4ff);
+      border: none;
+      color: #000;
+      border-radius: 14px;
+      cursor: pointer;
+      box-shadow: 0 0 20px #00eaff88;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: linear-gradient(to right, #00c4ff, #009eff);
+      transform: scale(1.05);
+    }
+
+    .game {
+      position: relative;
+      width: 100%;
+      max-width: 850px;
+      height: 200px;
+      margin-bottom: 25px;
+    }
+
+    .cup {
+      width: 100px;
+      height: 120px;
+      position: absolute;
+      bottom: 0;
+      cursor: pointer;
+      transition: left 0.5s ease-in-out, transform 0.2s;
+    }
+
+    .cup:hover {
+      transform: scale(1.1);
+      filter: brightness(1.1);
+    }
+
+    .cup img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 6px #00eaff99);
+    }
+
+    .cup.correct {
+      box-shadow: 0 0 20px 5px gold;
+      border-radius: 12px;
+    }
+
+    .stone {
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      z-index: 1;
+      animation: pop 0.4s ease;
+    }
+
+    @keyframes pop {
+      0% {
+        transform: translateX(-50%) scale(0.3);
+        opacity: 0;
+      }
+      100% {
+        transform: translateX(-50%) scale(1);
+        opacity: 1;
+      }
+    }
+
+    .stone img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px #ffff99);
+    }
+
+    #message {
+      font-size: 1.5rem;
+      margin-top: 15px;
+      font-weight: bold;
+      min-height: 2em;
+      text-align: center;
+      text-shadow: 0 0 4px #000;
+      transition: color 0.4s;
+    }
+
+    .back-button {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 12px 22px;
+      font-size: 1rem;
+      background: linear-gradient(to right, #00eaff, #00c4ff);
+      color: #000;
+      text-decoration: none;
+      border-radius: 12px;
+      box-shadow: 0 0 15px #00eaff88;
+      transition: all 0.3s ease;
+    }
+
+    .back-button:hover {
+      background: linear-gradient(to right, #00c4ff, #009eff);
+      transform: scale(1.05);
+    }
+
+    canvas#confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    @media (max-width: 600px) {
+      .cup {
+        width: 80px;
+        height: 100px;
+      }
+
+      .stone {
+        width: 32px;
+        height: 32px;
+      }
+
+      h1 {
+        font-size: 2.2rem;
+      }
+
+      button, .back-button {
+        font-size: 0.9rem;
+        padding: 10px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+
+  <h1>¿Dónde está la piedra?</h1>
+
+  <div class="controls">
+    <div class="difficulty-buttons">
+      <button data-level="easy" class="difficulty-btn selected" data-tooltip="3 vasos, mezcla lenta">🟢 Fácil</button>
+      <button data-level="medium" class="difficulty-btn" data-tooltip="4 vasos, mezcla rápida">🟡 Medio</button>
+      <button data-level="hard" class="difficulty-btn" data-tooltip="5 vasos, mezcla intensa">🔴 Difícil</button>
+    </div>
+    <button onclick="startGame()">🎲 Mezclar Vasos</button>
+  </div>
+
+  <div class="game" id="gameContainer"></div>
+  <div id="message"></div>
+
+  <!-- Botón para volver al inicio -->
+  <a href="index.html" class="back-button">🏠 Volver al inicio</a>
+
+  <!-- Confetti script -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script>
+    const gameContainer = document.getElementById('gameContainer');
+    const messageDiv = document.getElementById('message');
+    let cups = [];
+    let stone;
+    let stoneCupIndex = 0;
+    let canChoose = false;
+    let selectedDifficulty = 'easy';
+
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedDifficulty = btn.dataset.level;
+      });
+    });
+
+    function createGame(numCups) {
+      gameContainer.innerHTML = '';
+      cups = [];
+
+      const spacing = (gameContainer.offsetWidth - numCups * 100) / (numCups + 1);
+
+      for (let i = 0; i < numCups; i++) {
+        const cup = document.createElement('div');
+        cup.classList.add('cup');
+        const position = spacing + i * (100 + spacing);
+        cup.style.left = `${position}px`;
+        cup.dataset.index = i;
+        cup.onclick = () => checkCup(cup);
+
+        const img = document.createElement('img');
+        img.src = 'img/vaso.png';
+        cup.appendChild(img);
+
+        gameContainer.appendChild(cup);
+        cups.push(cup);
+      }
+
+      stone = document.createElement('div');
+      stone.classList.add('stone');
+      stone.innerHTML = '<img src="img/piedra.png" alt="Piedra">';
+    }
+
+    function startGame() {
+      let numCups = 3, speed = 600, moves = 8;
+
+      if (selectedDifficulty === 'medium') {
+        numCups = 4;
+        speed = 240;
+        moves = 16;
+      } else if (selectedDifficulty === 'hard') {
+        numCups = 5;
+        speed = 110;
+        moves = 27;
+      }
+
+      createGame(numCups);
+      messageDiv.textContent = '';
+      messageDiv.style.color = '#fff';
+
+      stoneCupIndex = Math.floor(Math.random() * numCups);
+      cups[stoneCupIndex].appendChild(stone);
+      stone.style.display = 'block';
+      canChoose = false;
+
+      setTimeout(() => {
+        stone.style.display = 'none';
+        mixCups(moves, speed);
+      }, 1500);
+    }
+
+    function mixCups(moves, speed) {
+      let i = 0;
+      const interval = setInterval(() => {
+        const [a, b] = getTwoDistinctIndexes(cups.length);
+        const posA = cups[a].style.left;
+        const posB = cups[b].style.left;
+        cups[a].style.left = posB;
+        cups[b].style.left = posA;
+
+        i++;
+        if (i >= moves) {
+          clearInterval(interval);
+          setTimeout(() => {
+            canChoose = true;
+          }, speed);
+        }
+      }, speed);
+    }
+
+    function getTwoDistinctIndexes(length) {
+      let a = Math.floor(Math.random() * length);
+      let b;
+      do {
+        b = Math.floor(Math.random() * length);
+      } while (a === b);
+      return [a, b];
+    }
+
+    function checkCup(clickedCup) {
+      if (!canChoose) return;
+      canChoose = false;
+
+      const clickedIndex = parseInt(clickedCup.dataset.index);
+      cups.forEach(c => c.classList.remove('correct'));
+
+      if (clickedIndex === stoneCupIndex) {
+        cups[stoneCupIndex].appendChild(stone);
+        stone.style.display = 'block';
+        messageDiv.textContent = '¡Correcto! Encontraste la piedra 🎉';
+        messageDiv.style.color = '#00ff88';
+        launchConfetti();
+      } else {
+        messageDiv.textContent = '¡Incorrecto! La piedra no estaba ahí 😢';
+        messageDiv.style.color = '#ff5555';
+
+        setTimeout(() => {
+          cups[stoneCupIndex].appendChild(stone);
+          stone.style.display = 'block';
+          cups[stoneCupIndex].classList.add('correct');
+        }, 800);
+      }
+    }
+
+    function launchConfetti() {
+      const duration = 1.5 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { origin: { y: 0.7 } };
+
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval = setInterval(() => {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        confetti({
+          particleCount: 50,
+          angle: randomInRange(55, 125),
+          spread: 60,
+          origin: { x: Math.random(), y: 0.6 },
+          colors: ['#00eaff', '#00ff88', '#fff', '#ffd700']
+        });
+      }, 250);
+    }
+  </script>
+</body>
+</html>

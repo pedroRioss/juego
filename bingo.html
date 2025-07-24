@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo</title>
+  <style>
+  :root {
+    --primary: #0d47a1;
+    --danger: #e53935;
+    --glass: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.25);
+    --text-light: #fff;
+    --shadow: rgba(0, 0, 0, 0.25);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'Segoe UI', sans-serif;
+    overflow: hidden;
+  }
+
+  body {
+    background: url('imagenes/fondo.png') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 10px;
+    gap: 20px;
+  }
+
+  header {
+    text-align: center;
+    animation: fadeInDown 1s ease-out;
+  }
+
+  header h1 {
+    font-size: 4rem;
+    color: var(--text-light);
+    text-shadow: 0 0 10px #0d47a1, 0 0 20px #4caf50;
+    animation: pulse 2s infinite alternate;
+    letter-spacing: 10px;
+  }
+
+  @keyframes pulse {
+    from { text-shadow: 0 0 5px #0d47a1; transform: scale(1); }
+    to { text-shadow: 0 0 20px #4caf50; transform: scale(1.05); }
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #bingo-board {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 10px;
+    width: 96vw;
+    max-height: 70vh;
+  }
+
+  .cell {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(3px);
+    border-radius: 12px;
+    aspect-ratio: 1/1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px var(--shadow);
+    animation: appear 0.5s ease-out;
+  }
+
+  @keyframes appear {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .letter {
+    font-size: 1.2vw;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px #000;
+  }
+
+  .cell div:last-child {
+    font-size: 1.7vw;
+    font-weight: bold;
+  }
+
+  .cell:hover {
+    transform: scale(1.08);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .marked {
+    animation: markedBounce 0.4s ease-in-out;
+    transform: scale(1.05);
+  }
+
+  @keyframes markedBounce {
+    0% { transform: scale(0.8) rotate(0deg); }
+    50% { transform: scale(1.2) rotate(10deg); }
+    100% { transform: scale(1.05) rotate(0deg); }
+  }
+
+  .marked .letter,
+  .marked div:last-child {
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 0 0 4px #000;
+  }
+
+  /* Colores por letra */
+  .letter-b { color: #ff5252; }
+  .letter-i { color: #ff9800; }
+  .letter-n { color: #4caf50; }
+  .letter-g { color: #03a9f4; }
+  .letter-o { color: #ba68c8; }
+
+  /* Colores de fondo al marcar */
+  .marked.letter-b { background-color: #ff5252; box-shadow: 0 0 15px #ff8a80; }
+  .marked.letter-i { background-color: #ff9800; box-shadow: 0 0 15px #ffc947; }
+  .marked.letter-n { background-color: #4caf50; box-shadow: 0 0 15px #81c784; }
+  .marked.letter-g { background-color: #03a9f4; box-shadow: 0 0 15px #4fc3f7; }
+  .marked.letter-o { background-color: #ba68c8; box-shadow: 0 0 15px #ce93d8; }
+
+  #clear-button {
+    margin-top: 30px;
+    background-color: var(--danger);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px var(--shadow);
+    position: relative;
+  }
+
+  #clear-button:hover {
+    background-color: #b71c1c;
+    transform: rotate(20deg) scale(1.15);
+  }
+
+  #clear-button::after {
+    content: "Reset";
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: #fff;
+    opacity: 0.8;
+  }
+
+  /* Botón para volver al inicio */
+  #go-home {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #03a9f4;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    text-align: center;
+    line-height: 50px;
+    text-decoration: none;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+    z-index: 1000;
+  }
+
+  #go-home:hover {
+    background-color: #0288d1;
+    transform: scale(1.1);
+  }
+
+  @media (max-width: 768px) {
+    header h1 { font-size: 2.5rem; }
+    .cell .letter { font-size: 3vw; }
+    .cell div:last-child { font-size: 4vw; }
+  }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>BINGO</h1>
+  </header>
+
+  <div id="bingo-board"></div>
+  <button id="clear-button" title="Reset">🔄</button>
+
+  <!-- Botón para volver a la página principal -->
+  <a href="index.html" id="go-home" title="Volver al inicio">🏠</a>
+
+  <script>
+    const board = document.getElementById("bingo-board");
+
+    function getLetter(number) {
+      if (number <= 15) return 'B';
+      if (number <= 30) return 'I';
+      if (number <= 45) return 'N';
+      if (number <= 60) return 'G';
+      return 'O';
+    }
+
+    for (let i = 1; i <= 75; i++) {
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
+
+      const letra = getLetter(i).toLowerCase();
+      const letter = document.createElement("div");
+      letter.classList.add("letter", `letter-${letra}`);
+      letter.textContent = letra.toUpperCase();
+
+      const number = document.createElement("div");
+      number.textContent = i;
+
+      cell.classList.add(`letter-${letra}`);
+      cell.appendChild(letter);
+      cell.appendChild(number);
+
+      cell.addEventListener("click", () => {
+        if (!cell.classList.contains("marked")) {
+          cell.classList.add("marked");
+          cell.style.animation = "none";
+          void cell.offsetWidth;
+          cell.style.animation = "markedBounce 0.4s ease-in-out";
+        } else {
+          cell.classList.remove("marked");
+        }
+      });
+
+      board.appendChild(cell);
+    }
+
+    document.getElementById("clear-button").addEventListener("click", () => {
+      document.querySelectorAll(".cell.marked").forEach(cell => {
+        cell.classList.remove("marked");
+      });
+    });
+  </script>
+
+</body>
+</html>
